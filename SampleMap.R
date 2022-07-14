@@ -56,6 +56,41 @@ map <- ggplot() +
         panel.border = element_rect(colour = "black", fill=NA, size=2)) 
 
 
+#pull base map info
+USA <- map_data("worldHires", region = "USA")
+Canada <- map_data("worldHires", region = "Canada")
+Mexico <- map_data("worldHires", region = "Mexico")
+
+
+#make a base map to build off of
+base <- ggplot() +
+  geom_polygon(data = USA, aes(x = long, y = lat, group = group),
+               color = "black", fill = "gray60", size = 0.1) +
+  geom_polygon(data = Canada, aes(x = long, y = lat, group = group),
+               color = "black", fill = "gray60", size = 0.1) +
+  geom_polygon(data = Mexico, aes(x = long, y = lat, group = group),
+               color = "black", fill = "gray60", size = 0.1) +
+  coord_fixed(xlim = c(-130, -70), ylim = c(20, 50), ratio = 1.2) +
+  geom_segment(aes(x = -105, xend = -121, y = 25, yend = 25),
+               size = 0.1) +
+  geom_segment(aes(x = -105, xend = -121, y = 35, yend = 35),
+               size = 0.1) +
+  geom_segment(aes(x = -105, xend = -105, y = 25, yend = 35),
+               size = 0.1) +
+  geom_segment(aes(x = -121, xend = -121, y = 25, yend = 35),
+               size = 0.1) +
+  labs(x = "", y = "") +
+  theme_nothing() +
+  theme(panel.border = element_rect(colour = "black", fill=NA),
+        panel.background = element_rect(fill = "white"))
+
+
+
+library(patchwork)
+map_full <- map + inset_element(base, right = 0.75, bottom = 0.75, left = 0.5, 
+                                  top = 0.98, align_to = 'full')
+
+
 png(filename="MSFigures/Iso_SampleMap.png", 
 units="in", 
 width=7, 
@@ -63,6 +98,6 @@ height=6,
 pointsize=8, 
 res=400)
 
-map
+map_full
 
 dev.off()
