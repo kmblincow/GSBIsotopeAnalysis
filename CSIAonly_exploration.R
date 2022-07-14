@@ -1,4 +1,6 @@
-#exploring the CSIA samples cuz there's some weirdness happening
+#Kayla Blincow
+
+#exploring the CSIA samples 
 
 rm(list = ls())
 
