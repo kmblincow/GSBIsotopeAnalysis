@@ -1437,7 +1437,7 @@ CTLyrsite <- loo(mod.C.TLyrsite$BUGSoutput$sims.list$LogLik)
 
 
 loo_compare(CTL, CSite, Cyr, Cyrsite, CTLsite, CTLyr, CTLyrsite)
-#looks like carbon v. total length is the best model?
+#looks like carbon v. TL, site, and yrsite do a similarly good job at predicting the relationship
 
 #let's just see what waic has to say
 CTL.w <- waic(mod.C.TL$BUGSoutput$sims.list$LogLik)
@@ -1464,7 +1464,7 @@ NTLyrsite <- loo(mod.N.TLyrsite$BUGSoutput$sims.list$LogLik)
 
 
 loo_compare(NTL, NSite, Nyr, Nyrsite, NTLsite, NTLyr, NTLyrsite)
-#looks like N v. year is the best model?
+#looks like N v. year is the best model
 
 #let's just see what waic has to say
 NTL.w <- waic(mod.N.TL$BUGSoutput$sims.list$LogLik)
