@@ -2,9 +2,12 @@
 #Update: 3/2/2021
 
 #The goal of this script is to run a Bayesian mixing model to look at relative
-#contributions of different primary production sources to GSB diets.
+#contributions of different primary production sources to GSB diets using MixSIAR.
 
 #Basing this off the alligator example from Stock PeerJ publication
+
+#Update 3/9/2021: after talking to Brice decided adding a random effect of individual
+#would confounded with individual effects associated with length fixed effect
 
 #clear my workspace 
 rm(list = ls())
@@ -14,33 +17,48 @@ library(tidyverse)
 library(MixSIAR)
 library(R2jags)
 
+
+
+####Run CSIA derived N TDF mixing model####
+
 # load mixture (consumer) data
 
-mix <- load_mix_data(filename="MixingModel/FinalGSBBulk.csv",
+mix <- load_mix_data(filename="FinalGSBBulk.csv",
                      iso_names=c("d13C", "d15N"),
-                     factors="tag_ID",
-                     fac_random=TRUE,
+                     factors = NULL,
+                     fac_random=NULL,
                      fac_nested=NULL,
                      cont_effects="TotalLength")
 
-# load source data
-source <- load_source_data(filename= "MixingModel/PPSources.csv",
+# mix <- load_mix_data(filename="CSIA_length.csv",
+#                      iso_names=c("d13C", "d15N"),
+#                      factors = NULL,
+#                      fac_random=NULL,
+#                      fac_nested=NULL,
+#                      cont_effects="TotalLength")
+
+
+#with fixed effect of sample size
+source <- load_source_data(filename= "MixingModel/IsotopeMixingModel_GSB/IsotopeMixingModel_GSB/PPSources_means.csv",
                            source_factors=NULL,
                            conc_dep=FALSE,
                            data_type="means",
                            mix=mix)
 
 # load TEF data
-discr <- load_discr_data(filename="MixingModel/gsb_TEF.csv", mix=mix)
+#TEF data with calculated slope value for N and standard literature values for C
+discr <- load_discr_data(filename = "MixingModel/IsotopeMixingModel_GSB/IsotopeMixingModel_GSB/gsb_TEF_stCrnge.csv", mix = mix)
+
 
 #isospace plot
 plot_data(filename="isospace_plot",
-          plot_save_pdf=TRUE,
-          plot_save_png=FALSE,
+          plot_save_pdf=FALSE,
+          plot_save_png=TRUE,
           mix, source, discr)
 
+
 # Define model structure and write JAGS model file
-model_filename <- paste0("MixingModel/MixSIAR_model_length.txt")
+model_filename <- paste0("MixSIAR_model_length_stdCTEF.txt")
 resid_err <- TRUE
 process_err <- TRUE
 write_JAGS_model(model_filename, resid_err, process_err, mix, source)
@@ -53,38 +71,29 @@ jags.mod <- run_model(run="short", mix, source, discr, model_filename,
 output_JAGS(jags.mod, mix, source,
             output_options = list(
               summary_save = TRUE,
-              summary_name = "MixingModel/summary_statistics",
+              summary_name = "ModelSummary/summary_statistics_HighSS",
               sup_post = TRUE,
               plot_post_save_pdf = TRUE,
-              plot_post_name = "MixingModel/Posteriors/posterior_density",
+              plot_post_name = "ModelSummary/Posteriors/posterior_density_HighSS",
               sup_pairs = TRUE,
               plot_pairs_save_pdf = TRUE, 
-              plot_pairs_name = "MixingModel/pairs_plot",
+              plot_pairs_name = "ModelSummary/pairs_plot_HighSS",
               sup_xy = TRUE,
               plot_xy_save_pdf = TRUE,
-              plot_xy_name = "traceplot",
+              plot_xy_name = "ModelSummary/traceplot_HighSS",
               gelman = TRUE,
               heidel = FALSE,
               geweke = FALSE,
               diag_save = TRUE,
-              diag_name = "diagnostics",
+              diag_name = "ModelSummary/diagnostics_HighSS",
               indiv_effect = FALSE,
               plot_post_save_png = FALSE,
               plot_pairs_save_png = FALSE,
               plot_xy_save_png = FALSE)
-            )
+)
 graphics.off()
 
-
-###############################################################################
-calc_eps <- function(f){
-  n.sources <- length(f)
-  gam <- rep(1/n.sources,n.sources)
-  phi <- rep(0,n.sources)
-  phi[1] <- 1
-  sqrt(sum((f-gam)^2))/sqrt(sum((phi-gam)^2))
-} 
-
+####plot the results in terms of proportion of PP source by length####
 # Plot proportions vs. length 
 R2jags::attach.jags(jags.mod)
 n.sources <- source$n.sources
@@ -163,9 +172,6 @@ for(i in 1:n.plot){
     p.low[i,src] <- tmp.p.low[i,src]/sum(tmp.p.low[i,]);
     p.high[i,src] <- tmp.p.high[i,src]/sum(tmp.p.high[i,]);
   }
-  eps.med[i] <- calc_eps(p.median[i,])
-  eps.low[i] <- calc_eps(p.low[i,])
-  eps.high[i] <- calc_eps(p.high[i,])
 }
 
 colnames(p.median) <- source_names
@@ -176,29 +182,46 @@ df <- data.frame(reshape2::melt(p.median)[,2:3], rep(Cont1.plot,n.sources),
 colnames(df) <- c("source","median","x","low","high")
 
 # Plot of Diet vs. Cont effect
-png("MixingModel/diet_length_Conly.png", height=7, width=7, units='in', res=500)
 
-print(ggplot2::ggplot(data = df, ggplot2::aes(x = x, y = median)) +
-        ggplot2::geom_line(ggplot2::aes(x = x, y = median,
-                                        group = source, 
-                                        colour = source), size=1.5) +
-        ggplot2::geom_ribbon(ggplot2::aes(ymin = low, ymax = high, 
-                                          group = source, fill = source), 
-                             alpha=0.35) +
-        ggplot2::ylab("Diet Proportion") +
-        ggplot2::xlab("Total Length (cm)") +
-        ggplot2::scale_y_continuous(expand = c(0, 0), limits=c(0,1)) +
-        ggplot2::theme_bw() +
-        ggplot2::theme(panel.border = ggplot2::element_blank(), 
-                       panel.grid.major = ggplot2::element_blank(), 
-                       panel.grid.minor = ggplot2::element_blank(), 
-                       panel.background = ggplot2::element_blank(), 
-                       axis.line = ggplot2::element_line(colour = "black"), 
-                       axis.title = ggplot2::element_text(size = 16), 
-                       axis.text = ggplot2::element_text(size = 14), 
-                       legend.text = ggplot2::element_text(size = 14), 
-                       legend.position = c(.7,.5), 
-                       legend.justification = c(0,1), 
-                       legend.title = ggplot2::element_blank()))
+p <- print(ggplot2::ggplot(data = df, ggplot2::aes(x = x, y = median)) +
+             ggplot2::geom_ribbon(ggplot2::aes(ymin = low, ymax = high, 
+                                               group = source), 
+                                  alpha=0.35, fill = "gray60") +
+             ggplot2::geom_line(ggplot2::aes(x = x, y = median,
+                                             group = source, 
+                                             linetype = source), 
+                                color = "black", size=1.5) +
+             ggplot2::ylab("Diet Proportion") +
+             ggplot2::xlab("Total Length (cm)") +
+             ggplot2::scale_linetype_discrete(labels = c("Macroalgae",
+                                                         "Phytoplankton")) +
+             ggplot2::scale_y_continuous(expand = c(0, 0), limits=c(0,1)) +
+             ggplot2::theme_bw() +
+             ggplot2::theme(panel.border = ggplot2::element_blank(), 
+                            panel.grid.major = ggplot2::element_blank(), 
+                            panel.grid.minor = ggplot2::element_blank(), 
+                            panel.background = ggplot2::element_blank(), 
+                            axis.line = ggplot2::element_line(colour = "black"), 
+                            axis.title = ggplot2::element_text(size = 16), 
+                            axis.text = ggplot2::element_text(size = 14), 
+                            legend.text = ggplot2::element_text(size = 14), 
+                            legend.position = c(.7,.5), 
+                            legend.justification = c(0,1), 
+                            legend.title = ggplot2::element_blank()))
+
+
+png("Length_CN_CSIATDF.png", height=7, width=7, units='in', res=500)
+
+p 
+
 dev.off()
 
+#for publication
+tiff("MSFigures/FinalFigs/M14123_Fig4.tif",
+     width = 2800, 
+     height = 2600,
+     res = 300)
+
+p
+
+dev.off()
