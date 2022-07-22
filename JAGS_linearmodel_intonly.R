@@ -1478,3 +1478,68 @@ NTLyrsite.w <- waic(mod.N.TLyrsite$BUGSoutput$sims.list$LogLik)
 loo_compare(NTL.w, NSite.w, Nyr.w, Nyrsite.w, NTLsite.w, NTLyr.w, NTLyrsite.w)
 
 
+####Bi-panel Figure of NvTL and CvTL####
+#create objects out of output
+mn_site_alpha_C <- mod.C.TLsite$BUGSoutput$mean$alpha
+drws_site_alpha_C <- mod.C.TLsite$BUGSoutput$sims.list$alpha
+
+mn_mu_alpha_C <- mod.C.TLsite$BUGSoutput$mean$mu.alpha
+drws_mu_alpha_C <- mod.C.TLsite$BUGSoutput$sims.list$mu.alpha
+
+mn_beta_C <- mod.C.TLsite$BUGSoutput$mean$beta
+drws_beta_C <- mod.C.TLsite$BUGSoutput$sims.list$beta
+
+pCvL <- ggplot() +
+  geom_abline(intercept = drws_mu_alpha_C[smple],
+              slope = drws_beta_C[smple],
+              color = "gray70", alpha = 0.2) +
+  geom_point(data = d, aes(x = TotalLength, y = Cstd)) +
+  geom_abline(intercept = mn_mu_alpha_C,
+              slope = mn_beta_C, 
+              size = lsz) +
+  annotate(geom = "text", x = 48, y = 2, label = "(a)") +
+  labs(x = "Total Length (cm)", y = expression(paste(delta~""^13~C, " ‰"))) +
+  theme_classic()
+
+
+#create objects out of output
+mn_yr_alpha_N <- mod.N.TLyr$BUGSoutput$mean$alpha
+drws_yr_alpha_N <- mod.N.TLyr$BUGSoutput$sims.list$alpha
+
+mn_mu_alpha_N <- mod.N.TLyr$BUGSoutput$mean$mu.alpha
+drws_mu_alpha_N <- mod.N.TLyr$BUGSoutput$sims.list$mu.alpha
+
+mn_beta_N <- mod.N.TLyr$BUGSoutput$mean$beta
+drws_beta_N <- mod.N.TLyr$BUGSoutput$sims.list$beta
+
+pNvL <- ggplot() +
+  geom_abline(intercept = drws_mu_alpha_N[smple],
+              slope = drws_beta_N[smple],
+              color = "gray70", alpha = 0.2) +
+  geom_point(data = d, aes(x = TotalLength, y = Nstd)) +
+  geom_abline(intercept = mn_mu_alpha_N,
+              slope = mn_beta_N, 
+              size = lsz) +
+  annotate(geom = "text", x = 48, y = 2, label = "(b)") +
+  labs(x = "Total Length (cm)", y = expression(paste(delta~""^15~N, " ‰"))) +
+  theme_classic()
+
+library(patchwork)
+pCvL + pNvL
+
+png(filename="MSFigures/C_NvTL.png", 
+    width=2400, 
+    height=1200, 
+    res=300)
+pCvL + pNvL
+
+dev.off()
+
+#for publication
+tiff(filename="MSFigures/FinalFigs/M14123_Fig2.tif", 
+    width=2400, 
+    height=1200, 
+    res=300)
+pCvL + pNvL
+
+dev.off()
