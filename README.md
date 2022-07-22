@@ -24,8 +24,8 @@ FinalGSBBulk.csv
 Files:  
 MixingModel.R  
 FinalGSBBulk.csv  
-PPSources.csv (derived from Lit_PP_Isotopes.csv - shown in Table A2)  
-gsb_TEF.csv  
+PPSources_means.csv (derived from Lit_PP_Isotopes.csv - shown in Table A2)  
+gsb_TEF_stCrnge.csv  
 
 #CSIA Analysis  
 ##(Fig. 5, Fig. A2)  
