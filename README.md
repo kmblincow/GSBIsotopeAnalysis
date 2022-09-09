@@ -1,6 +1,8 @@
 # GSBIsotopeAnalysis
 This repository houses the code to perform the analyses in the Blincow et al. (2022) manuscript which details the trophic ecology of Giant Sea Bass using stable isotope and gut content analyses.
 
+Blincow KM, Swalethorp R, Ramírez-Valdez A, Semmens BX (2022) Giant appetites: exploring the trophic ecology of California’s largest kelp forest predator, the giant sea bass Stereolepis gigas. Mar Ecol Prog Ser 695:157-171. https://doi.org/10.3354/meps14123
+
 #Sample Map   
 ##(Fig. 1)  
 Files:  
